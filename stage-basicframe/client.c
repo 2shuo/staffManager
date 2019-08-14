@@ -263,7 +263,7 @@ void do_admin_deluser(int sockfd,MSG *msg)//管理员删除用户
 	//printf("------------%s-----------%d.\n",__func__,__LINE__);
 	msg->msgtype = ADMIN_DELUSER;
 	
-	printf("请输入要删除的用户工号："); //工号唯一
+	printf("请输入要删除的用户id："); //工号唯一
 	scanf("%d",&msg->info.no);
 	getchar();
 	// printf("请输入要删除的用户名："); //工号唯一
@@ -302,7 +302,6 @@ void do_admin_history (int sockfd,MSG *msg)
 			break;	
 		puts("===================================================================================");
 		printf("%s",msg->recvmsg);
-		puts("===================================================================================");
 	}
 
 }
@@ -387,10 +386,10 @@ void do_user_modification(int sockfd,MSG *msg)
 	int n = 0;
 	msg->msgtype = USER_MODIFY;
  //    //msg->id = msg->info.no;
-	//printf("修改信息的工号：%d\n",msg->id);
-	printf("修改信息的工号：");
-	scanf("%d", &msg->info.no);
-	getchar();
+	printf("修改信息的工号：%d\n",msg->id);
+	//printf("修改信息的工号：");
+	//scanf("%d", &msg->info.no);
+	//getchar();
  
 	printf("***********请输入要修改的选项(仅可修改以下信息)*********\n");
 	printf("***********	1：家庭住址   2：电话  3：密码  4：退出***********\n");
@@ -474,9 +473,9 @@ int admin_or_user_login(int sockfd,MSG *msg)
 {
 	//printf("------------%s-----------%d.\n",__func__,__LINE__);
 	//输入用户名和密码
-	memset(msg->username, 0, NAMELEN);
-	printf("请输入用户名：");
-	scanf("%s",msg->username);
+//	memset(msg->id, 0, NAMELEN);
+	printf("请输入id：");
+	scanf("%d",&msg->id);
 	getchar();
 
 	memset(msg->passwd, 0, DATALEN);
@@ -496,13 +495,13 @@ int admin_or_user_login(int sockfd,MSG *msg)
 		if(msg->usertype == ADMIN)
 		{
 			printf("\n");
-			printf("亲爱的%s，欢迎您登陆员工管理系统！\n",msg->username);
+			printf("亲爱的%d，欢迎您登陆员工管理系统！\n",msg->id);
 			admin_menu(sockfd,msg);
 		}
 		else if(msg->usertype == USER)
 		{
 			printf("\n");
-			printf("亲爱的%s，欢迎您登陆员工管理系统！\n",msg->username);
+			printf("亲爱的%d，欢迎您登陆员工管理系统！\n",msg->id);
 			user_menu(sockfd,msg);
 		}
 	}

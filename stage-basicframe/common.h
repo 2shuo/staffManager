@@ -69,12 +69,13 @@ typedef struct staff_info{
 /*定义双方通信的结构体信息*/
 typedef struct {
 	int  msgtype;     //请求的消息类型
-	//int  id;          //编号
+	int  id;          //编号
 	int  usertype;    //ADMIN 1	USER 2	   
 	char username[NAMELEN];  //姓名
 	char passwd[8];			 //登陆密码
 	char recvmsg[DATALEN];   //通信的消息
 	int  flags;      //标志位
+	int fd;
 	staff_info_t info;      //员工信息
 }MSG;
 

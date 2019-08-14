@@ -46,7 +46,7 @@ void process_historyInfo_add(MSG *msg,char *buf)
 
 	get_system_time(timedata);
 
-	sprintf(sqlhistory,"insert into historyinfo values ('%s','%s','%s');",timedata,msg->username,buf);
+	sprintf(sqlhistory,"insert into historyinfo values ('%s',%d,'%s');",timedata,msg->id,buf);
 	if(sqlite3_exec(db,sqlhistory,NULL,NULL,&errmsg)!= SQLITE_OK){
 		printf("%s.\n",errmsg);
 		printf("insert historyinfo failed.\n");
@@ -64,12 +64,13 @@ int process_user_or_admin_login_request(int acceptfd,MSG *msg)
 	int nrow,ncolumn;
 
 	msg->info.usertype =  msg->usertype;
-	strcpy(msg->info.name,msg->username);
+	msg->info.no = msg->id;
+	//strcpy(msg->info.name,msg->username);
 	strcpy(msg->info.passwd,msg->passwd);
 
 	
-	printf("usrtype: %#x-----usrname: %s---passwd: %s.\n",msg->info.usertype,msg->info.name,msg->info.passwd);
-	sprintf(sql,"select * from usrinfo where usertype=%d and name='%s' and passwd='%s';",msg->info.usertype,msg->info.name,msg->info.passwd);
+	printf("usrtype: %#x-----usrid: %d---passwd: %s.\n",msg->info.usertype,msg->info.no,msg->info.passwd);
+	sprintf(sql,"select * from usrinfo where usertype=%d and staffno=%d and passwd='%s';",msg->info.usertype,msg->info.no,msg->info.passwd);
 	if(sqlite3_get_table(db,sql,&result,&nrow,&ncolumn,&errmsg) != SQLITE_OK){
 		printf("---****----%s.\n",errmsg);		
 	}else{
@@ -97,18 +98,18 @@ int process_user_modify_request(int acceptfd,MSG *msg)
 	{
 		case 'P':
 			sprintf(sql,"update usrinfo set phone='%s' where staffno=%d;",msg->info.phone,msg->info.no);
-			sprintf(historybuf,"%s修改工号为%d的电话为%s",msg->username,msg->info.no,msg->info.phone);
+			sprintf(historybuf,"%d修改工号为%d的电话为%s",msg->id,msg->info.no,msg->info.phone);
 			break;
 		case 'D':
 			sprintf(sql,"update usrinfo set addr='%s' where staffno=%d;",msg->info.addr, msg->info.no);
-			sprintf(historybuf,"%s修改工号为%d的家庭住址为%s",msg->username,msg->info.no,msg->info.addr);
+			sprintf(historybuf,"%d修改工号为%d的家庭住址为%s",msg->id,msg->info.no,msg->info.addr);
 			break;	
 		case 'M':
 			sprintf(sql,"update usrinfo set passwd='%s' where staffno=%d;",msg->info.passwd, msg->info.no);
-			sprintf(historybuf,"%s修改工号为%d的密码为%s",msg->username,msg->info.no,msg->info.passwd);
+			sprintf(historybuf,"%d修改工号为%d的密码为%s",msg->id,msg->info.no,msg->info.passwd);
 			break;
 	}
-	printf("msgtype :%#x--usrtype: %#x--usrname: %s-passwd: %s.\n",msg->msgtype,msg->info.usertype,msg->info.name,msg->info.passwd);
+	printf("msgtype :%#x--usrtype: %#x--usrname: %d-passwd: %s.\n",msg->msgtype,msg->info.usertype,msg->info.no,msg->info.passwd);
 	printf("msg->info.no :%d\t msg->info.addr %s\t msg->info.phone: %s.\n",msg->info.no,msg->info.addr,msg->info.phone);
 
 	//执行sql命令
@@ -166,7 +167,7 @@ int process_user_query_request(int acceptfd,MSG *msg)
 	int nrow,ncolumn;
 	char *errmsg;
 
-	sprintf(sql,"select * from usrinfo where name='%s';",msg->username);
+	sprintf(sql,"select * from usrinfo where staffno=%d;",msg->id);
 	//
     msg->flags = acceptfd;
 	if(sqlite3_exec(db,sql,user_query_callback,(void *)msg,&errmsg) != SQLITE_OK){
@@ -221,39 +222,39 @@ int process_admin_modify_request(int acceptfd,MSG *msg)
 	switch(msg->recvmsg[0]){
 		case 'N':
 			sprintf(sql,"update usrinfo set name='%s' where staffno=%d;",msg->info.name, msg->info.no);
-			sprintf(historybuf,"%s修改工号为%d的用户名为%s",msg->username,msg->info.no,msg->info.name);
+			sprintf(historybuf,"%d修改工号为%d的用户名为%s",msg->id,msg->info.no,msg->info.name);
 			break;
 		case 'A':
 			sprintf(sql,"update usrinfo set age=%d where staffno=%d;",msg->info.age, msg->info.no);
-			sprintf(historybuf,"%s修改工号为%d的年龄为%d",msg->username,msg->info.no,msg->info.age);
+			sprintf(historybuf,"%d修改工号为%d的年龄为%d",msg->id,msg->info.no,msg->info.age);
 			break;
 		case 'P':
 			sprintf(sql,"update usrinfo set phone='%s' where staffno=%d;",msg->info.phone,msg->info.no);
-			sprintf(historybuf,"%s修改工号为%d的电话为%s",msg->username,msg->info.no,msg->info.phone);
+			sprintf(historybuf,"%d修改工号为%d的电话为%s",msg->id,msg->info.no,msg->info.phone);
 			break;
 		case 'D':
 			sprintf(sql,"update usrinfo set addr='%s' where staffno=%d;",msg->info.addr, msg->info.no);
-			sprintf(historybuf,"%s修改工号为%d的家庭住址为%s",msg->username,msg->info.no,msg->info.addr);
+			sprintf(historybuf,"%d修改工号为%d的家庭住址为%s",msg->id,msg->info.no,msg->info.addr);
 			break;
 		case 'W':
 			sprintf(sql,"update usrinfo set work='%s' where staffno=%d;",msg->info.work, msg->info.no);
-			sprintf(historybuf,"%s修改工号为%d的职位为%s",msg->username,msg->info.no,msg->info.work);
+			sprintf(historybuf,"%d修改工号为%d的职位为%s",msg->id,msg->info.no,msg->info.work);
 			break;
 		case 'T':
 			sprintf(sql,"update usrinfo set date='%s' where staffno=%d;",msg->info.date, msg->info.no);
-			sprintf(historybuf,"%s修改工号为%d的入职日期为%s",msg->username,msg->info.no,msg->info.date);
+			sprintf(historybuf,"%d修改工号为%d的入职日期为%s",msg->id,msg->info.no,msg->info.date);
 			break;
 		case 'L':
 			sprintf(sql,"update usrinfo set level=%d where staffno=%d;",msg->info.level, msg->info.no);
-			sprintf(historybuf,"%s修改工号为%d的评级为%d",msg->username,msg->info.no,msg->info.level);
+			sprintf(historybuf,"%d修改工号为%d的评级为%d",msg->id,msg->info.no,msg->info.level);
 			break;
 		case 'S':
 			sprintf(sql,"update usrinfo set salary=%.2f where staffno=%d;",msg->info.salary, msg->info.no);
-			sprintf(historybuf,"%s修改工号为%d的工资为%.2f",msg->username,msg->info.no,msg->info.salary);
+			sprintf(historybuf,"%d修改工号为%d的工资为%.2f",msg->id,msg->info.no,msg->info.salary);
 			break;
 		case 'M':
 			sprintf(sql,"update usrinfo set passwd='%s' where staffno=%d;",msg->info.passwd, msg->info.no);
-			sprintf(historybuf,"%s修改工号为%d的密码为%s",msg->username,msg->info.no,msg->info.passwd);
+			sprintf(historybuf,"%d修改工号为%d的密码为%s",msg->id,msg->info.no,msg->info.passwd);
 			break;
 	}
 
@@ -300,7 +301,7 @@ int process_admin_adduser_request(int acceptfd,MSG *msg)
 		printf("%s register success.\n",msg->info.name);
 	}
 
-	sprintf(buf,"管理员%s添加了%s用户",msg->username,msg->info.name);
+	sprintf(buf,"管理员%d添加了%s用户",msg->id,msg->info.name);
 	process_historyInfo_add(msg,buf);
 
 	return 0;
@@ -326,7 +327,7 @@ int process_admin_deluser_request(int acceptfd,MSG *msg)
 		send(acceptfd,msg,sizeof(msg),0);
 		printf("%s deluser %d success.\n",msg->username,msg->info.no);
 	}
-	sprintf(buf,"管理员%s删除了%s用户",msg->username,msg->info.name);
+	sprintf(buf,"管理员%d删除了%s用户",msg->id,msg->info.name);
 	process_historyInfo_add(msg,buf);
 	return 0;
 
@@ -356,8 +357,10 @@ int admin_query_callback(void *arg, int ncolumn, char **f_value, char **f_name)
 		sprintf(msg->recvmsg,"%-8s %-8s %-8s %-8s %-8s %-8s %-8s %-8s %-8s %-8s %-8s.\n",f_value[i],f_value[i+1],f_value[i+2],f_value[i+3],f_value[i+4],
 			      f_value[i+5],f_value[i+6],f_value[i+7],f_value[i+8],f_value[i+9],f_value[i+10]);
 		send(acceptfd,msg,sizeof(MSG),0);
+		//usleep(1000);
 	}
 	puts("");
+
 
 	return 0;
 }
@@ -382,44 +385,50 @@ int process_admin_query_request(int acceptfd,MSG *msg)
 		printf("admin_query_callback  record done.\n");
 	}
 
-	//查询结束
 	strcpy(msg->recvmsg,"finish");
 	send(acceptfd,msg,sizeof(MSG),0);
     flags = 0;
+	//查询结束
+	// if(msg->flags != 1){  //全部查询的时候不知道何时结束，需要手动发送结束标志位，但是按人名查找不需要
+	// 		//通知对方查询结束了
+	// 		strcpy(msg->recvmsg,"finish");
+	// 		send(acceptfd,msg,sizeof(MSG),0);
+	// }
+ //    flags = 0;
 	
-	/*if(sqlite3_get_table(db, sql, &resultp,&nrow,&ncolumn,&errmsg) != SQLITE_OK){
-		printf("%s.\n",errmsg);
-	}else{
-		printf("ncolumn :%d\tnrow :%d.\n",ncolumn,nrow);
+	// if(sqlite3_get_table(db, sql, &resultp,&nrow,&ncolumn,&errmsg) != SQLITE_OK){
+	// 	printf("%s.\n",errmsg);
+	// }else{
+	// 	printf("ncolumn :%d\tnrow :%d.\n",ncolumn,nrow);
 		
-		for(i = 0; i < ncolumn; i ++){
-			printf("%-8s ",resultp[i]);
-		}
-		puts("");
+	// 	for(i = 0; i < ncolumn; i ++){
+	// 		printf("%-8s ",resultp[i]);
+	// 	}
+	// 	puts("");
 		
-		int index = ncolumn;
-		for(i = 0; i < nrow; i ++){
-			printf("%s    %s     %s     %s     %s     %s     %s     %s     %s     %s     %s.\n",resultp[index+ncolumn-11],resultp[index+ncolumn-10],\
-				resultp[index+ncolumn-9],resultp[index+ncolumn-8],resultp[index+ncolumn-7],resultp[index+ncolumn-6],resultp[index+ncolumn-5],\
-				resultp[index+ncolumn-4],resultp[index+ncolumn-3],resultp[index+ncolumn-2],resultp[index+ncolumn-1]);
+	// 	int index = ncolumn;
+	// 	for(i = 0; i < nrow; i ++){
+	// 		printf("%s    %s     %s     %s     %s     %s     %s     %s     %s     %s     %s.\n",resultp[index+ncolumn-11],resultp[index+ncolumn-10],\
+	// 			resultp[index+ncolumn-9],resultp[index+ncolumn-8],resultp[index+ncolumn-7],resultp[index+ncolumn-6],resultp[index+ncolumn-5],\
+	// 			resultp[index+ncolumn-4],resultp[index+ncolumn-3],resultp[index+ncolumn-2],resultp[index+ncolumn-1]);
 				
-			sprintf(msg->recvmsg,"%s,    %s,    %s,    %s,    %s,    %s,    %s,    %s,    %s,    %s,    %s;",resultp[index+ncolumn-11],resultp[index+ncolumn-10],\
-				resultp[index+ncolumn-9],resultp[index+ncolumn-8],resultp[index+ncolumn-7],resultp[index+ncolumn-6],resultp[index+ncolumn-5],\
-				resultp[index+ncolumn-4],resultp[index+ncolumn-3],resultp[index+ncolumn-2],resultp[index+ncolumn-1]);
-			send(acceptfd,msg,sizeof(MSG),0);
+	// 		sprintf(msg->recvmsg,"%s,    %s,    %s,    %s,    %s,    %s,    %s,    %s,    %s,    %s,    %s;",resultp[index+ncolumn-11],resultp[index+ncolumn-10],\
+	// 			resultp[index+ncolumn-9],resultp[index+ncolumn-8],resultp[index+ncolumn-7],resultp[index+ncolumn-6],resultp[index+ncolumn-5],\
+	// 			resultp[index+ncolumn-4],resultp[index+ncolumn-3],resultp[index+ncolumn-2],resultp[index+ncolumn-1]);
+	// 		send(acceptfd,msg,sizeof(MSG),0);
 
-			index += ncolumn;
-		}
+	// 		index += ncolumn;
+	// 	}
 		
-		if(msg->flags != 1){  //全部查询的时候不知道何时结束，需要手动发送结束标志位，但是按人名查找不需要
-			//通知对方查询结束了
-			strcpy(msg->recvmsg,"finish");
-			send(acceptfd,msg,sizeof(MSG),0);
-		}
+	// 	if(msg->flags != 1){  //全部查询的时候不知道何时结束，需要手动发送结束标志位，但是按人名查找不需要
+	// 		//通知对方查询结束了
+	// 		strcpy(msg->recvmsg,"finish");
+	// 		send(acceptfd,msg,sizeof(MSG),0);
+	// 	}
 		
-		sqlite3_free_table(resultp);
-		printf("sqlite3_get_table successfully.\n");
-	}*/
+	// 	sqlite3_free_table(resultp);
+	// 	printf("sqlite3_get_table successfully.\n");
+	// }
 
 }
 
